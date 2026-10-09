@@ -1,0 +1,138 @@
+# ==============================================================================
+# RobotX Mission Control - .gitignore
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Frontend / Node & Vite (web/)
+# ------------------------------------------------------------------------------
+node_modules/
+dist/
+dist-ssr/
+*.local
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ------------------------------------------------------------------------------
+# Backend / Python (server/)
+# ------------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.hypothesis/
+
+# ------------------------------------------------------------------------------
+# Virtual Environments
+# ------------------------------------------------------------------------------
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# ------------------------------------------------------------------------------
+# Environment Variables & Sensitive Credentials
+# ------------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+!.env.template
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+credentials.json
+secrets.yaml
+secrets.json
+service_account.json
+
+# ------------------------------------------------------------------------------
+# Robotics, ROS & Hardware Telemetry Logs
+# ------------------------------------------------------------------------------
+*.log
+logs/
+*.bag
+*.db3
+*.ulg
+*.tlog
+*.bin
+
+# ------------------------------------------------------------------------------
+# Heavy Media, Vision Records & Point Clouds (Scratch / Run outputs)
+# ------------------------------------------------------------------------------
+recordings/
+captures/
+*.mp4
+*.avi
+*.mkv
+*.h264
+*.pcd
+
+# Heavy AI / ML Model Weights (Keep code clean; track with Git LFS if needed)
+*.pt
+*.pth
+*.onnx
+*.engine
+*.weights
+*.ckpt
+*.h5
+
+# ------------------------------------------------------------------------------
+# Analysis, AI Tools & Codebase Caches
+# ------------------------------------------------------------------------------
+graphify-out/
+.claude/
+.gemini/
+.cursor/
+.copilot/
+
+# ------------------------------------------------------------------------------
+# IDEs & Editor Configuration
+# ------------------------------------------------------------------------------
+.vscode/
+!.vscode/settings.json.example
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+*.bak
+
+# ------------------------------------------------------------------------------
+# Operating System Files
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini

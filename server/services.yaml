@@ -1,0 +1,36 @@
+# Services the GUI is allowed to start/stop. The browser only sends a name,
+# never a raw command. Each cmd runs via `bash -c` with ROS sourced first.
+ros_setup: /opt/ros/jazzy/setup.bash
+ros_domain_id: 0           # same as ~/RobotX/script/mavros.sh (its ROS_DOMAIN_ID=30 line is commented out)
+
+services:
+  mavros:
+    label: MAVROS
+    cmd: bash ~/RobotX/script/mavros.sh
+  # stream_host:=127.0.0.1 -> the vision node sends its H.264/RTP stream to this robot, where the
+  # API's video relay (server/video.py) turns it into MJPEG for the web GUI. Manual runs of the
+  # node (without this override) still stream to the ground station as before.
+  vision:
+    label: Vision (geo)
+    cmd: >-
+      ros2 run vision_geo vision_geo --ros-args
+      --params-file ~/RobotX/install/vision_geo/share/vision_geo/config/vision_geo.yaml
+      -p stream_host:=127.0.0.1
+    source: ~/RobotX/install/setup.bash
+  # stream_width must be a multiple of 4 (848, not 854): with 854 the BGR rows are not 4-byte aligned
+  # and the H.264 stream comes out as a solid green picture. stream_fps:=30 matches the camera loop.
+  vision_video:
+    label: Vision (video)
+    cmd: >-
+      ros2 run vision_video vision_video --ros-args
+      --params-file ~/RobotX/install/vision_video/share/vision_video/config/vision_video.yaml
+      -p stream_host:=127.0.0.1 -p stream_width:=848 -p stream_height:=480 -p stream_fps:=30
+    source: ~/RobotX/install/setup.bash
+  control:
+    label: Control
+    cmd: ros2 run control control --ros-args --params-file ~/RobotX/config/config.yaml
+    source: ~/RobotX/install/setup.bash
+  bridge:
+    label: UAV Bridge
+    cmd: ros2 run uav_bridge uav_bridge --ros-args --params-file ~/RobotX/src/uav_bridge/config/uav_bridge.yaml
+    source: ~/RobotX/install/setup.bash
