@@ -17,7 +17,8 @@ const stateClass = (s) => ({ running: 'ok', crashed: 'bad', stopping: 'warn' }[s
       <div v-for="s in robot.services" :key="s.name" class="svc">
         <span class="led" :class="stateClass(s.state)" />
         <div class="svc-name"><b>{{ s.label }}</b>
-          <small class="muted">{{ s.state }}<template v-if="s.pid"> · {{ Math.round(s.uptime) }}s</template></small></div>
+          <small class="muted">{{ s.state }}<template v-if="s.pid"> · {{ Math.round(s.uptime) }}s</template></small>
+          <small v-if="s.detail" class="detail" :title="s.detail">{{ s.detail }}</small></div>
         <span class="spacer" />
         <button :disabled="s.state === 'running'" @click="robot.serviceAction(s.name, 'start')">Start</button>
         <button class="danger" :disabled="s.state !== 'running'" @click="robot.serviceAction(s.name, 'stop')">Stop</button>

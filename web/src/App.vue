@@ -8,6 +8,8 @@ import SimulationPanel from './components/SimulationPanel.vue'
 import ServicesPanel from './components/ServicesPanel.vue'
 import LogsPanel from './components/LogsPanel.vue'
 import GpsCapture from './components/GpsCapture.vue'
+import GcsDialog from './components/GcsDialog.vue'
+import CameraDialog from './components/CameraDialog.vue'
 
 const robot = useRobot()
 onMounted(() => robot.start())
@@ -27,4 +29,7 @@ onMounted(() => robot.start())
       <GpsCapture class="panel" />
     </div>
   </div>
+  <GcsDialog v-if="robot.gcsPrompt" />
+  <CameraDialog v-if="robot.cameraDialog" />
+  <div v-if="robot.toast" class="toast" :class="robot.toast.kind">{{ robot.toast.text }}</div>
 </template>

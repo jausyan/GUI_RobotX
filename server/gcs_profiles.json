@@ -1,0 +1,7 @@
+{
+  "profiles": [
+    {"id": "el-tech", "name": "el-tech laptop", "ip": "100.95.74.67", "port": 14550},
+    {"id": "mamat", "name": "mamat-loq laptop", "ip": "100.123.220.55", "port": 14550}
+  ],
+  "last": null
+}

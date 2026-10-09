@@ -6,12 +6,16 @@ ros_domain_id: 0           # same as ~/RobotX/script/mavros.sh (its ROS_DOMAIN_I
 services:
   mavros:
     label: MAVROS
-    cmd: bash ~/RobotX/script/mavros.sh
+    # the GUI asks which ground station to forward MAVLink to; {gcs_url} is filled in from that profile
+    # (~/RobotX/script/mavros.sh passes extra arguments on to mavros_node)
+    cmd: bash ~/RobotX/script/mavros.sh -p gcs_url:={gcs_url}
+    needs: gcs
   # stream_host:=127.0.0.1 -> the vision node sends its H.264/RTP stream to this robot, where the
   # API's video relay (server/video.py) turns it into MJPEG for the web GUI. Manual runs of the
   # node (without this override) still stream to the ground station as before.
   vision:
     label: Vision (geo)
+    camera: true
     cmd: >-
       ros2 run vision_geo vision_geo --ros-args
       --params-file ~/RobotX/install/vision_geo/share/vision_geo/config/vision_geo.yaml
@@ -21,6 +25,7 @@ services:
   # and the H.264 stream comes out as a solid green picture. stream_fps:=30 matches the camera loop.
   vision_video:
     label: Vision (video)
+    camera: true
     cmd: >-
       ros2 run vision_video vision_video --ros-args
       --params-file ~/RobotX/install/vision_video/share/vision_video/config/vision_video.yaml

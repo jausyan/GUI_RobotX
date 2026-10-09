@@ -10,8 +10,8 @@ const hasGps = computed(() => gps.value && gps.value.lat != null && !isNaN(gps.v
 const noFix = computed(() => hasGps.value && gps.value.fix < 0)
 
 const arr = (key) => `[${robot.captures.map((c) => c[key].toFixed(7)).join(', ')}]`
-const latText = computed(() => `lat = ${arr('lat')}`)
-const lonText = computed(() => `lon = ${arr('lon')}`)
+const latText = computed(() => `survey_lat: ${arr('lat')}`)
+const lonText = computed(() => `survey_lon: ${arr('lon')}`)
 
 async function copy(which) {
   const text = which === 'lat' ? latText.value : which === 'lon' ? lonText.value : `${latText.value}\n${lonText.value}`

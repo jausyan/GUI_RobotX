@@ -15,6 +15,9 @@ class Service:
         self.label = cfg.get("label", name)
         self.cmd = cfg["cmd"]
         self.source = cfg.get("source")
+        self.uses_camera = bool(cfg.get("camera"))   # the saved camera config is applied before it starts
+        self.needs = cfg.get("needs")      # e.g. "gcs": the GUI must supply a GCS profile to start
+        self.detail = None                 # what it was started with, shown in the GUI
         self.ros_setup = ros_setup
         self.domain_id = domain_id
         self.proc = None
@@ -41,6 +44,8 @@ class Service:
             "pid": self.proc.pid if running else None,
             "uptime": round(time.time() - self.started_at, 1) if running else None,
             "exit_code": self.exit_code,
+            "needs": self.needs,
+            "detail": self.detail if running else None,
         }
 
     def _emit(self, line):
@@ -48,13 +53,15 @@ class Service:
         for q in list(self.subscribers):
             q.put_nowait(line)
 
-    async def start(self):
+    async def start(self, fmt=None, detail=None):
         if self.state in ("running", "stopping"):
             return
+        cmd = self.cmd.format(**fmt) if fmt else self.cmd
+        self.detail = detail
         parts = [f"source {self.ros_setup}"]
         if self.source:
             parts.append(f"source {os.path.expanduser(self.source)}")
-        parts.append(f"exec {self.cmd}")
+        parts.append(f"exec {cmd}")
         env = {**os.environ, "ROS_DOMAIN_ID": str(self.domain_id), "PYTHONUNBUFFERED": "1"}
         self.stopping = False
         self.exit_code = None

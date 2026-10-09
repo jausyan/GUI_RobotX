@@ -7,6 +7,8 @@ const emit = defineEmits(['close'])
 const mini = ref(false)
 const video = computed(() => robot.telem?.video)
 const live = computed(() => !!video.value?.live)
+const recording = computed(() => !!robot.telem?.recorder?.recording)
+const recTime = computed(() => { const t = Math.floor(robot.telem?.recorder?.elapsed || 0); return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}` })
 // follow the stream's own shape (848x480 = 16:9, 640x480 = 4:3); 4:3 while there is no signal
 const ratio = computed(() => (video.value?.width && video.value?.height ? video.value.width / video.value.height : 4 / 3))
 // a fresh URL each time the feed comes back, so the <img> reconnects instead of showing a stale stream
@@ -44,8 +46,10 @@ const up = () => (drag = null)
     <div class="cam-head" @pointerdown="down" @pointermove="move" @pointerup="up">
       <span class="rec" :class="{ on: live }" /> <b>Camera</b>
       <span class="spacer" />
+      <span v-if="recording" class="tag bad">● REC {{ recTime }}</span>
       <span v-if="live" class="tag ok">live · {{ video.width }}×{{ video.height }} · {{ video.fps }} fps</span>
       <span v-else class="tag">no signal</span>
+      <button class="ghost" title="Camera settings & recording" @click="robot.cameraDialog = true">⚙</button>
       <button class="ghost" :title="mini ? 'Expand' : 'Minimize'" @click="mini = !mini">{{ mini ? '▢' : '–' }}</button>
       <button class="ghost" title="Close" @click="emit('close')">✕</button>
     </div>

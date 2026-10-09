@@ -11,6 +11,7 @@ stream_host at this machine (services.yaml does that with -p stream_host:=127.0.
 import asyncio
 import ctypes
 import os
+import shlex
 import signal
 import time
 from collections import deque
@@ -32,6 +33,20 @@ PIPELINE = (
     f'! video/x-raw{_SIZE},framerate={FPS}/1 '
     f'! jpegenc quality={QUALITY} ! fdsink fd=1 sync=false'
 )
+
+
+def split_jpegs(buf):
+    """Cut complete JPEG images out of a byte stream. Returns (frames, leftover)."""
+    frames = []
+    while True:
+        start = buf.find(SOI)
+        if start < 0:
+            return frames, b""
+        end = buf.find(EOI, start + 2)
+        if end < 0:
+            return frames, buf[start:]
+        frames.append(buf[start:end + 2])
+        buf = buf[end + 2:]
 
 
 def jpeg_size(jpeg):
@@ -88,8 +103,8 @@ class VideoRelay:
             await asyncio.sleep(2)
 
     async def _run_once(self):
-        self._proc = await asyncio.create_subprocess_shell(
-            PIPELINE, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+        self._proc = await asyncio.create_subprocess_exec(
+            *shlex.split(PIPELINE), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
             preexec_fn=_die_with_parent)
         self.log.append(f"gst started pid {self._proc.pid} on udp:{PORT}")
         asyncio.create_task(self._drain_stderr(self._proc))
@@ -98,18 +113,9 @@ class VideoRelay:
             chunk = await self._proc.stdout.read(65536)
             if not chunk:
                 break
-            buf += chunk
-            while True:
-                start = buf.find(SOI)
-                if start < 0:
-                    buf = b""
-                    break
-                end = buf.find(EOI, start + 2)
-                if end < 0:
-                    buf = buf[start:]
-                    break
-                await self._publish(buf[start:end + 2])
-                buf = buf[end + 2:]
+            frames, buf = split_jpegs(buf + chunk)
+            for f in frames:
+                await self.publish(f)
         code = await self._proc.wait()
         self.log.append(f"gst exited ({code})")
 
@@ -117,7 +123,7 @@ class VideoRelay:
         async for line in proc.stderr:
             self.log.append(line.decode(errors="replace").rstrip())
 
-    async def _publish(self, jpeg):
+    async def publish(self, jpeg):
         now = time.monotonic()
         self.frame = jpeg
         if self.seq == 0 or self.seq % 150 == 0:

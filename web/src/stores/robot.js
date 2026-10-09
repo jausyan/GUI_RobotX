@@ -17,6 +17,9 @@ export const useRobot = defineStore('robot', {
     services: [],
     track: [],
     orderLog: [],
+    gcsPrompt: null,        // { service, resolve } while the 'choose GCS' dialog is open
+    cameraDialog: false,
+    toast: null,
     captures: safe(() => JSON.parse(localStorage.getItem(CAP_KEY)), []) || [],
   }),
   getters: {
@@ -131,9 +134,45 @@ export const useRobot = defineStore('robot', {
         this.services = await (await fetch(`${this.base}/services`)).json()
       } catch { this.disconnect() }
     },
+    // ---- generic API helper: JSON in/out, throws Error(detail) on failure -------------------------------
+    async api(method, path, body) {
+      const r = await fetch(`${this.base}${path}`, {
+        method,
+        headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+      })
+      const data = await r.json().catch(() => null)
+      if (!r.ok) throw new Error(data?.detail || `HTTP ${r.status}`)
+      return data
+    },
+    notify(text, kind = 'ok') {
+      this.toast = { text, kind, id: Date.now() }
+      const id = this.toast.id
+      setTimeout(() => { if (this.toast?.id === id) this.toast = null }, 4500)
+    },
     async serviceAction(name, action) {
+      if (action === 'start') return this.requestStart(name)
       await fetch(`${this.base}/services/${name}/${action}`, { method: 'POST' })
       this.refreshServices()
+    },
+    // start a service; MAVROS first asks which ground station (GCS) to forward MAVLink to
+    async requestStart(name) {
+      const svc = this.services.find((s) => s.name === name)
+      let body
+      if (svc?.needs === 'gcs') {
+        const pid = await new Promise((resolve) => { this.gcsPrompt = { service: svc.label, resolve } })
+        this.gcsPrompt = null
+        if (!pid) return false              // cancelled
+        body = { gcs: pid }
+      }
+      try {
+        await this.api('POST', `/services/${name}/start`, body)
+      } catch (e) {
+        this.notify(`${svc?.label || name}: ${e.message}`, 'bad')
+        return false
+      }
+      this.refreshServices()
+      return true
     },
     async stopAll() {
       await fetch(`${this.base}/services/stop-all`, { method: 'POST' })
@@ -141,7 +180,7 @@ export const useRobot = defineStore('robot', {
     },
     async startAll() {
       for (const n of ['mavros', 'vision', 'control']) {
-        await this.serviceAction(n, 'start')
+        if (!(await this.requestStart(n)) && n === 'mavros') return   // cancelled / failed -> do not go on
         await new Promise((r) => setTimeout(r, 2000))
       }
     },
